@@ -100,13 +100,48 @@ void function Training_SharedInit()
 
 	SetupTitanfallGlitchAnims()
 }
+void function GET_Successful( response, callback ){
 
 
+}
+void function GET_Fail( response, callback )
+{
+
+
+}
+void function SEND_REQUEST(){
+HttpRequest request
+request.method = HttpRequestMethod.GET
+request.url = "http://titanfall.rocks/gauntlet/"
+request.queryParameters[ "name" ] <- [ name.tostring() ]
+request.queryParameters[ "time" ] <- [ time.tostring() ]
+
+
+void functionref( HttpRequestResponse ) onSuccess = void function ( HttpRequestResponse response ) : ( callback )
+{
+        GET_Successful( response, callback )
+}
+
+void functionref( HttpRequestFailure ) onFailure = void function ( HttpRequestFailure failure ) : ( callback )
+{
+        GET_Fail( failure, callback )
+}
+
+return NSHttpRequest( request, onSuccess, onFailure )
+
+}
+catch( error )
+	{
+		print( "Eval breakpoint error at SEND_REQUEST() at - sh_sp_training.nut: " + error + "\n" )
+	}
+}
 // ======================================
 // ========= TRAINING GAUNTLET ==========
 // ======================================
 void function Training_SetupGauntlet()
-{array<string> items = ["Online User data 1","Online User data 2","Online User data 3","Online User data 4","Online User data 5","Online User data 6"]
+{
+	try{
+	array<string> items = ["Online User data 1","Online User data 2","Online User data 3","Online User data 4","Online User data 5","Online User data 6"]
 
 	GauntletInfo gauntlet = Gauntlet_Create( "training_gauntlet" )
 
@@ -122,12 +157,14 @@ void function Training_SetupGauntlet()
 	Gauntlet_SetLeaderboardEnabled( 	gauntlet, false )
 	Gauntlet_SetGhostAttractSpot( 		gauntlet, "gauntlet_ghost_spot" )
 	foreach ( string name in items )
-		{
+	{
 			GauntletGhost NEwG = Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_01, name, $"anim_recording/training_record_gauntlet_gamesager.rpak", true )
 			Gauntlet_SetGhostDuration( gauntlet, NEwG, 10.0 )
 
+
 		}
 		Gauntlet_RefreshLeaderboard(gauntlet)
+		SEND_REQUEST();
 	// TODO data files
 	
 	//Gauntlet_AddGhost( gauntlet, GHOST_NAME_FIRSTRUN, 	"#GAUNTLET_GHOST_NAME_FIRSTRUN", 	$"anim_recording/training_record_gauntlet_firstrun.rpak" )
@@ -151,6 +188,11 @@ void function Training_SetupGauntlet()
 	Gauntlet_SetGhostDuration( gauntlet, playerGhost, TRAINING_GAUNTLET_MAX_TIME_TO_PROGRESS )
 
 	file.trainingGauntlet = gauntlet
+	}
+	catch( error )
+	{
+		print( "Eval breakpoint error at Training_SetupGauntlet() at - sh_sp_training.nut: " + error + "\n" )
+	}
 }
 
 GauntletInfo function GetTrainingGauntlet()
