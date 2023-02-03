@@ -101,6 +101,21 @@ void function Training_SharedInit()
 	SetupTitanfallGlitchAnims()
 }
 
+bool function Spyglass_TryParseTable(table data, string key)
+{
+    if (!(key in data))
+    {
+        return false;
+    }
+
+    var value = data[key];
+    if (typeof value == "table")
+    {
+        return true;
+    }
+
+    return false;
+}
 bool function Spyglass_TryParseArray(table data, string key)
 {
     if (!(key in data))
@@ -119,31 +134,40 @@ bool function Spyglass_TryParseArray(table data, string key)
 
 void function GET_Successful(HttpRequestResponse response ){
 	try{
-	string response_ = response.body
-	printt("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE RESULT OF THE REQUEST IS - "+response_)
-	table result = DecodeJSON(response_)
-   if (result.len() == 0)
+	
+	printt("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE RESULT OF THE REQUEST IS - "+response.body)
+	table result = DecodeJSON(response.body)
+   	if (result.len() == 0)
     {
+		printt("\n\n\n\n\nEMPTY");
         return 
-    }
- 	foreach (var value in expect array(result["name"]))
-    {
-        if (typeof value == "string")
+    }		
+	
+	//PrintTable( result )
+
+	 foreach (var key, var value in result)
+		//foreach(var v in result)
         {
-          printt("\n\n\n\n\n\n\n\n\n\n\n\n\n" + expect string(value));
-        }
-    }
-	// foreach (var value in GetTableArray(result, "")){
-//	printt("\n\n\n\n\n\n\n\n\n\n\n\n\n" + value)
+		//printt("\n\n\n\n\n VAL ="+val);
+		PrintTable( value )
+printt("\n\n\n\n\n\n\n\n\n\n\n\n\n")
+ foreach (var key, var value in expect table(value)){
+	
+	printt(value)
 
 
-	//	}
+ }
+
+		}
+ 		
+       
+   	
 }
 
 
 	catch( error )
 	{
-		print( "Eval breakpoint error at GET_Successful() at - sh_sp_training.nut: " + error + "\n" )
+		print( "\n\n\n\n\n\n\n\n\n\n\n\n\nEval breakpoint error at GET_Successful() at - sh_sp_training.nut: " + error + "\n\n\n\n\n\n\n\n\n\n\n\n\n\n" )
 	}
 }
 void function GET_Fail(HttpRequestResponse response )
@@ -156,13 +180,12 @@ void function SEND_REQUEST(){
 	try{
 HttpRequest request
 request.method = HttpRequestMethod.GET
-request.url = "http://titanfall.rocks/gauntlet/"
+request.url = "https://jsonplaceholder.typicode.com/comments?postId=1"
 table<string, array<string> > params
 //params[ "id" ] <- [ id.tostring() ]
 
  bool NSHttpRequest = NSHttpRequest(request, GET_Successful)
 
-print("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE STATUS OF THE REQUEST IS - "+ NSHttpRequest)
 
 }
 catch( error )
