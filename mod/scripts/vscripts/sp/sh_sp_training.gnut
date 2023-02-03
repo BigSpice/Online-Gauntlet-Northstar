@@ -100,16 +100,47 @@ void function Training_SharedInit()
 
 	SetupTitanfallGlitchAnims()
 }
+
+bool function Spyglass_TryParseArray(table data, string key)
+{
+    if (!(key in data))
+    {
+        return false;
+    }
+
+    var value = data[key];
+    if (typeof value == "array")
+    {
+        return true;
+    }
+
+    return false;
+}
+
 void function GET_Successful(HttpRequestResponse response ){
 	try{
 	string response_ = response.body
-printt("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE RESULT OF THE REQUEST IS - "+response_)
-table result = DecodeJSON(response_)
-//foreach(var item in result){
-printt("\n\n\n\n\n"+result["name"]+"\n"+result["time"]+"\n\n\n\n\n")
+	printt("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE RESULT OF THE REQUEST IS - "+response_)
+	table result = DecodeJSON(response_)
+   if (result.len() == 0)
+    {
+        return 
+    }
+ 	foreach (var value in expect array(result["name"]))
+    {
+        if (typeof value == "string")
+        {
+          printt("\n\n\n\n\n\n\n\n\n\n\n\n\n" + expect string(value));
+        }
+    }
+	// foreach (var value in GetTableArray(result, "")){
+//	printt("\n\n\n\n\n\n\n\n\n\n\n\n\n" + value)
 
-//}
+
+	//	}
 }
+
+
 	catch( error )
 	{
 		print( "Eval breakpoint error at GET_Successful() at - sh_sp_training.nut: " + error + "\n" )
