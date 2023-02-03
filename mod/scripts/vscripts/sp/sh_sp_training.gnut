@@ -100,34 +100,38 @@ void function Training_SharedInit()
 
 	SetupTitanfallGlitchAnims()
 }
-void function GET_Successful( response, callback ){
+void function GET_Successful(HttpRequestResponse response ){
+	try{
+	string response_ = response.body
+printt("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE RESULT OF THE REQUEST IS - "+response_)
+table result = DecodeJSON(response_)
+//foreach(var item in result){
+printt("\n\n\n\n\n"+result["name"]+"\n"+result["time"]+"\n\n\n\n\n")
 
-
+//}
 }
-void function GET_Fail( response, callback )
+	catch( error )
+	{
+		print( "Eval breakpoint error at GET_Successful() at - sh_sp_training.nut: " + error + "\n" )
+	}
+}
+void function GET_Fail(HttpRequestResponse response )
 {
 
 
 }
+
 void function SEND_REQUEST(){
+	try{
 HttpRequest request
 request.method = HttpRequestMethod.GET
 request.url = "http://titanfall.rocks/gauntlet/"
-request.queryParameters[ "name" ] <- [ name.tostring() ]
-request.queryParameters[ "time" ] <- [ time.tostring() ]
+table<string, array<string> > params
+//params[ "id" ] <- [ id.tostring() ]
 
+ bool NSHttpRequest = NSHttpRequest(request, GET_Successful)
 
-void functionref( HttpRequestResponse ) onSuccess = void function ( HttpRequestResponse response ) : ( callback )
-{
-        GET_Successful( response, callback )
-}
-
-void functionref( HttpRequestFailure ) onFailure = void function ( HttpRequestFailure failure ) : ( callback )
-{
-        GET_Fail( failure, callback )
-}
-
-return NSHttpRequest( request, onSuccess, onFailure )
+print("\n\n\n\n\n\n\n\n\n\n\n\n\nTHE STATUS OF THE REQUEST IS - "+ NSHttpRequest)
 
 }
 catch( error )
