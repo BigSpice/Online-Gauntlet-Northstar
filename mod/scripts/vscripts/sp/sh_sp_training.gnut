@@ -45,7 +45,6 @@ global const string GHOST_NAME_CHAL_09 = "training_record_gauntlet_challenge_08"
 global const string GHOST_NAME_ALIAS_LASTIMOSA 	= GHOST_NAME_CHAL_04
 global const string GHOST_NAME_ALIAS_ANDERSON 	= GHOST_NAME_CHAL_06
 global const string GHOST_NAME_ALIAS_BRIGGS 	= GHOST_NAME_CHAL_07
-
 global struct DialogueGroup
 {
 	array<string> lines
@@ -53,14 +52,19 @@ global struct DialogueGroup
 
 	bool allPlayed = false
 }
-
+ global struct LEADERBOARD_STRUCT
+{
+	float time_ 
+	string name_
+}
 global struct StopwatchDisplayStrings
 {
 	string mins
 	string secs
 	string ms
 }
-
+global array<LEADERBOARD_STRUCT> LEADER_BOARD_DATA_LIVE 
+GauntletInfo gauntlet_Leader
 struct
 {
 	#if SERVER
@@ -101,12 +105,189 @@ void function Training_SharedInit()
 	SetupTitanfallGlitchAnims()
 }
 
+bool function Spyglass_TryParseTable(table data, string key)
+{
+    if (!(key in data))
+    {
+        return false;
+    }
 
+    var value = data[key];
+    if (typeof value == "table")
+    {
+        return true;
+    }
+
+    return false;
+}
+bool function Spyglass_TryParseArray(table data, string key)
+{
+    if (!(key in data))
+    {
+        return false;
+    }
+
+    var value = data[key];
+    if (typeof value == "array")
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void function UPDATE_BOARD(array<LEADERBOARD_STRUCT> Data)
+{	
+	
+	GauntletInfo trainingGauntlet = GetTrainingGauntlet()
+
+	 foreach (LEADERBOARD_STRUCT entry in Data)
+	{
+		float time__
+		time__ = (entry.time_).tofloat()
+			if(time__ < 1.0){
+
+				continue
+				}else{
+					if(time__ < 1.0){
+
+							time__ = 0.0
+						}
+
+				}
+			GauntletGhost NEwG = Gauntlet_AddGhost( trainingGauntlet,GHOST_NAME_CHAL_01, entry.name_ , $"anim_recording/training_record_gauntlet_firstrun.rpak", true )
+			Gauntlet_SetGhostDuration( trainingGauntlet, NEwG, time__ )
+
+
+		}
+		GauntletGhost NEwG = Gauntlet_AddGhost( trainingGauntlet,GHOST_NAME_CHAL_01,"FF" , $"anim_recording/training_record_gauntlet_firstrun.rpak", true )
+			Gauntlet_SetGhostDuration( trainingGauntlet, NEwG, 20.0 )
+		Gauntlet_RefreshLeaderboard(trainingGauntlet)
+		Gauntlet_SetActiveGhostID(trainingGauntlet,1)
+	// TODO data files
+		}
+
+
+
+
+
+void function GET_Successful( HttpRequestResponse response )
+{
+	try{	
+
+    string res = response.body
+    res = "{ \"data\":" + res + "}"
+    printt("THE RESPONSE IS:\n" + res)
+    table json = DecodeJSON(res)
+
+    if (!("data" in json))
+    {
+        printt("OH NO SOMETHING REALLY BAD HAPPENED")
+        return
+    }
+    array entries = expect array(json["data"])
+	int FF = 0
+    printt("====== START OF ENTRIES ======")
+    // parse each entry
+    foreach (var entry in entries)
+	{
+		LEADERBOARD_STRUCT LEADER_STUCT
+      //  printt("===== New Entry =====")
+        if (typeof(entry) != "table")
+        {
+         //   printt("WEIRD ENTRY: " + entry)
+            continue
+        }
+        expect table(entry)
+
+        if (!("name" in entry))
+        {   
+
+         //   printt("NO NAME IN ENTRY")
+            continue
+        }
+        else
+        {
+			FF = FF+1
+			LEADER_STUCT.name_ =  expect string(entry["name"])
+            printt(FF +"name: " + entry["name"])
+        }
+		LEADER_BOARD_DATA_LIVE.append(LEADER_STUCT)
+		//print("\n\n\n\n\n\n\n\n\n\n\n\n\n ADDED" +LEADER_STUCT.name_ +"\n\n\n\n\n\n\n\n\n\n\n\n\n")
+        if (!("time" in entry))
+        {
+           // printt("NO TIME IN ENTRY")
+            continue
+        }
+        else
+        {	 
+			if(typeof(entry["time"] ) == "float"){
+			LEADER_STUCT.time_ =  expect float(entry["time"]).tofloat()
+        //    printt("time: " + entry["time"])
+			}else{
+
+				if(typeof(entry["time"] ) == "int"){
+			LEADER_STUCT.time_ =  expect int(entry["time"]).tofloat()
+        //    printt("time: " + entry["time"])
+			}
+			}
+        }
+	}
+		print( "\n\n\n\n\n\n\n\n\n\n\n\n\nTABLES")
+
+		  foreach (LEADERBOARD_STRUCT entry in LEADER_BOARD_DATA_LIVE)
+	{
+			print( "\n\n\n\n\n\n\n\n\n\n\n\n\n")
+            printt("FINSHEDNAME: " + entry.name_)
+			print( "\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
+	}
+	UPDATE_BOARD(LEADER_BOARD_DATA_LIVE)
+
+
+
+
+
+	
+    }
+
+	catch( error )
+	{
+		print( "\n\n\n\n\n\n\n\n\n\n\n\n\nEval breakpoint error at GET_Successful() at - sh_sp_training.nut: " + error + "\n\n\n\n\n\n\n\n\n\n\n\n\n\n" )
+	}
+
+}
+void function GET_Fail(HttpRequestResponse response )
+{
+
+
+}
+
+void function SEND_REQUEST(){
+	try{
+HttpRequest request
+request.method = HttpRequestMethod.GET
+request.url = "http://titanfall.rocks/gauntlet"
+table<string, array<string> > params
+//params[ "id" ] <- [ id.tostring() ]
+
+ bool NSHttpRequest = NSHttpRequest(request, GET_Successful)
+	wait 15
+
+
+}
+catch( error )
+	{
+		print( "Eval breakpoint error at SEND_REQUEST() at - sh_sp_training.nut: " + error + "\n" )
+	}
+}
 // ======================================
 // ========= TRAINING GAUNTLET ==========
 // ======================================
 void function Training_SetupGauntlet()
-{array<string> items = ["Online User data 1","Online User data 2","Online User data 3","Online User data 4","Online User data 5","Online User data 6"]
+{
+	try{
+	array<string> items= ["Online User data 1","Online User data 2","Online User data 3","Online User data 4","Online User data 5","Online User data 6"]
 
 	GauntletInfo gauntlet = Gauntlet_Create( "training_gauntlet" )
 
@@ -121,15 +302,13 @@ void function Training_SetupGauntlet()
 	Gauntlet_SetLeaderboardSpot( 		gauntlet, "gauntlet_leaderboard_topleft" )
 	Gauntlet_SetLeaderboardEnabled( 	gauntlet, false )
 	Gauntlet_SetGhostAttractSpot( 		gauntlet, "gauntlet_ghost_spot" )
-	foreach ( string name in items )
-		{
-			GauntletGhost NEwG = Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_01, name, $"anim_recording/training_record_gauntlet_gamesager.rpak", true )
-			Gauntlet_SetGhostDuration( gauntlet, NEwG, 10.0 )
 
-		}
-		Gauntlet_RefreshLeaderboard(gauntlet)
-	// TODO data files
+
 	
+
+	thread SEND_REQUEST()
+	
+
 	//Gauntlet_AddGhost( gauntlet, GHOST_NAME_FIRSTRUN, 	"#GAUNTLET_GHOST_NAME_FIRSTRUN", 	$"anim_recording/training_record_gauntlet_firstrun.rpak" )
 	//Gauntlet_AddGhost( gauntlet, GHOST_NAME_CHAL_WIP, 	"#GAUNTLET_GHOST_NAME_CHAL_WIP", 	$"anim_recording/training_record_gauntlet_challenge_wip.rpak" )
 
@@ -151,7 +330,17 @@ void function Training_SetupGauntlet()
 	Gauntlet_SetGhostDuration( gauntlet, playerGhost, TRAINING_GAUNTLET_MAX_TIME_TO_PROGRESS )
 
 	file.trainingGauntlet = gauntlet
+	}
+	catch( error )
+	{			print( "\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
+		print( "Eval breakpoint error at Training_SetupGauntlet() at - sh_sp_training.nut: " + error + "\n" )
+					print( "\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
+	}
 }
+
+
 
 GauntletInfo function GetTrainingGauntlet()
 {
@@ -160,11 +349,16 @@ GauntletInfo function GetTrainingGauntlet()
 
 
 // HACK having this in shared file breaks the autobuild... it wants to include the anim recording asset in common.rson for some reason
-GauntletGhost function Gauntlet_AddPlayerGhost( GauntletInfo gauntlet )
-{
+GauntletGhost function Gauntlet_AddPlayerGhost( GauntletInfo gauntlet)
+{	
+	
+	
+	
 	GauntletGhost playerGhost = Gauntlet_AddGhost( gauntlet, GHOST_NAME_PLAYER, "#GAUNTLET_GHOST_NAME_COOPER", $"anim_recording/training_record_gauntlet_firstrun.rpak", true )
 	gauntlet.hasPlayerGhost = true
 	return playerGhost
+
+	
 }
 
 
